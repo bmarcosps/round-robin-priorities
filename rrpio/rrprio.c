@@ -1,7 +1,9 @@
 /*
 *  rrprio.c - Implementacao do algoritmo Round Robin com Prioridades
 *
-*  Autores: SUPER_PROGRAMADORES_C
+*  Autores: Bruno Marcos Pinheiro da Silva
+			Pedro Henrique Gasparetto Lugão
+			Warley Almeida Silva
 *  Projeto: Trabalho Pratico I - Sistemas Operacionais
 *  Organizacao: Universidade Federal de Juiz de Fora
 *  Departamento: Dep. Ciencia da Computacao
