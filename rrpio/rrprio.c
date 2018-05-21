@@ -106,8 +106,7 @@ int rrpReleaseParams(Process *p) {
 //Retorna o valor da prioridade anteriormente atribuida ao processo
 int rrpSetPrio(Process *p, int prio) {
 	//...
-	RRPrioParams * params = malloc(sizeof(RRPrioParams));
+	RRPrioParams * params = processGetSchedParams(p);
 	params->prio = prio;
-	processSetSchedParams(p,params);
 	return 0;
 }
