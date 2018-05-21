@@ -17,7 +17,7 @@
 
 typedef struct rrprio_params {
     int prio;
-    
+    int done;
         //...
 } RRPrioParams;
 

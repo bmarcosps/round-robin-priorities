@@ -33,26 +33,72 @@ const char rrprioName[]="RRPr";
 //Deve envolver o registro do algoritmo junto ao escalonador
 void rrpInitSchedInfo() {
 	//...
-    
-    
+    SchedInfo * rrp = malloc(sizeof(SchedInfo));
+	for(unsigned int i = 0; i<4;i++)
+		rrp->name[i] = rrprioName[i];
+	rrp->initParamsFn = rrpInitSchedParams;
+	rrp->scheduleFn = rrpSchedule;
+	rrp->releaseParamsFn = rrpReleaseParams;
+	schedRegisterScheduler(rrp);
 }
 
 //Inicializa os parametros de escalonamento de um processo p, chamada
 //normalmente quando o processo e' associado ao slot de RRPrio
 void rrpInitSchedParams(Process *p, void *params) {
 	//...
+	RRPrioParams * newParams = params;
+	newParams->done = 0;
+	processSetSchedParams(p,newParams);
 }
 
 //Retorna o proximo processo a obter a CPU, conforme o algortimo RRPrio
 Process* rrpSchedule(Process *plist) {
 	//...
-	return NULL;
+	Process* p;
+	int prio = 7;
+	int found = 0;
+	while(prio>=0){
+		p = plist;
+		while(p!=NULL){
+			RRPrioParams * params = processGetSchedParams(p);
+			if(params->prio == prio && params->done == 0){
+				if(processGetStatus(p) == PROC_READY){
+					found = 1;
+					params->done = 1;
+					Process* next = processGetNext(p);
+					while(next!=NULL){ //search for next process
+						RRPrioParams * nextParams = processGetSchedParams(next);
+						if(nextParams->prio == prio){
+							break;
+						}
+						next = processGetNext(next);
+					}
+					if(next == NULL){ //last process done -> undone all process with given priority
+						Process * undoneAll = plist;
+						while(undoneAll!=NULL){
+							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
+							if(undoneParams->prio == prio){
+								undoneParams->done = 0;
+							}
+							undoneAll = processGetNext(undoneAll);
+						}
+					}
+					break;
+				}
+			}
+			p = processGetNext(p);
+		}
+		if(found) break;
+		prio--;
+	}
+	return p;
 }
 
 //Libera os parametros de escalonamento de um processo p, chamada 
 //normalmente quando o processo e' desassociado do slot de RRPrio
 int rrpReleaseParams(Process *p) {
 	//...
+	free(processGetSchedParams(p));
 	return 0;
 }
 
@@ -60,5 +106,8 @@ int rrpReleaseParams(Process *p) {
 //Retorna o valor da prioridade anteriormente atribuida ao processo
 int rrpSetPrio(Process *p, int prio) {
 	//...
+	RRPrioParams * params = malloc(sizeof(RRPrioParams));
+	params->prio = prio;
+	processSetSchedParams(p,params);
 	return 0;
 }

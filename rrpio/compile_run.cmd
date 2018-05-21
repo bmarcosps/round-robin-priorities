@@ -1,3 +1,3 @@
 gcc -Wall -g -c *.c 
-gcc *.o -o rrpio.exe
-rrpio.exe
+gcc *.o -o rrpio
+./rrpio
