@@ -107,6 +107,7 @@ int rrpReleaseParams(Process *p) {
 int rrpSetPrio(Process *p, int prio) {
 	//...
 	RRPrioParams * params = processGetSchedParams(p);
+	int oldPrio = params->prio;
 	params->prio = prio;
-	return 0;
+	return oldPrio;
 }
