@@ -20,10 +20,19 @@ const char rrprioName[]="RRPr";
 
 //=====Funcoes Auxiliares=====
 
+Process * plistPrio[7];
 
+Process * rrpGetNextPrio(Process * p){
+	return NULL;
+}
 
+void rrpInsertProcessPrioList(Process * p){
 
+}
 
+void rrpRemoveProcessPrioList(Process * p){
+
+}
 
 //=====Funcoes da API=====
 
@@ -32,23 +41,33 @@ const char rrprioName[]="RRPr";
 //Deve envolver a inicializacao de possiveis parametros gerais
 //Deve envolver o registro do algoritmo junto ao escalonador
 void rrpInitSchedInfo() {
-	//...
-    SchedInfo * rrp = malloc(sizeof(SchedInfo));
-	for(unsigned int i = 0; i<4;i++)
+	unsigned int i;
+
+    SchedInfo* rrp = malloc(sizeof(SchedInfo));
+
+	for(i = 0; i < 4; i++) {
 		rrp->name[i] = rrprioName[i];
+	}
+
 	rrp->initParamsFn = rrpInitSchedParams;
 	rrp->scheduleFn = rrpSchedule;
 	rrp->releaseParamsFn = rrpReleaseParams;
 	schedRegisterScheduler(rrp);
+
+	for(i = 0; i < 8; i++){
+		plistPrio[i] = NULL;
+	}
 }
 
 //Inicializa os parametros de escalonamento de um processo p, chamada
 //normalmente quando o processo e' associado ao slot de RRPrio
 void rrpInitSchedParams(Process *p, void *params) {
-	//...
 	RRPrioParams * newParams = params;
 	newParams->done = 0;
+	newParams->nextPrio = NULL;
 	processSetSchedParams(p,newParams);
+
+	rrpInsertProcessPrioList(p);
 }
 
 //Retorna o proximo processo a obter a CPU, conforme o algortimo RRPrio
