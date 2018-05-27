@@ -18,6 +18,8 @@
 //Nome unico do algoritmo. Deve ter 4 caracteres.
 const char rrprioName[]="RRPr";
 
+int unDonesByPrio[8] = {0,0,0,0,0,0,0,0};
+
 //=====Funcoes Auxiliares=====
 
 
@@ -48,7 +50,8 @@ void rrpInitSchedParams(Process *p, void *params) {
 	//...
 	RRPrioParams * newParams = params;
 	newParams->done = 0;
-	processSetSchedParams(p,newParams);
+	unDonesByPrio[newParams->prio] ++;
+	schedSetScheduler(p,newParams,0);
 }
 
 //Retorna o proximo processo a obter a CPU, conforme o algortimo RRPrio
@@ -59,64 +62,42 @@ Process* rrpSchedule(Process *plist) {
 	int found = 0;
 	int chance = 0;
 	while(prio>=0){
+		if(unDonesByPrio[prio] == 0){ // não há processos com tal prioridade
+			prio --;
+		}
 		p = plist;
 		while(p!=NULL){
 			RRPrioParams * params = processGetSchedParams(p);
 			if(params->prio == prio && params->done == 0){
-				if(processGetStatus(p) == PROC_READY){
-					found = 1;
-					params->done = 1;
-					Process* next = processGetNext(p);
-					while(next!=NULL){ //search for next process
-						RRPrioParams * nextParams = processGetSchedParams(next);
-						if(nextParams->prio == prio){
-							break;
+				if(processGetStatus(p) == PROC_READY || processGetStatus(p) == PROC_RUNNING) found = 1;
+				params->done = 1;
+				unDonesByPrio[prio] --;
+				if(unDonesByPrio[prio] == 0){ //conferir se todos estão done
+					Process * undoneAll = plist;
+					while(undoneAll!=NULL){
+						RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
+						if(undoneParams->prio == prio){
+							undoneParams->done = 0;
+							unDonesByPrio[prio] ++;
 						}
-						next = processGetNext(next);
+						undoneAll = processGetNext(undoneAll);
 					}
-					if(next == NULL){ //last process done -> undone all process with given priority
-						Process * undoneAll = plist;
-						while(undoneAll!=NULL){
-							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
-							if(undoneParams->prio == prio){
-								undoneParams->done = 0;
-							}
-							undoneAll = processGetNext(undoneAll);
-						}
-					}
-					break;
-				}else{
-                    params->done = 1;
-					Process* next = processGetNext(p);
-					while(next!=NULL){ //search for next process
-						RRPrioParams * nextParams = processGetSchedParams(next);
-						if(nextParams->prio == prio){
-							break;
-						}
-						next = processGetNext(next);
-					}
-					if(next == NULL){ //last process done -> undone all process with given priority
-						Process * undoneAll = plist;
-						while(undoneAll!=NULL){
-							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
-							if(undoneParams->prio == prio){
-								undoneParams->done = 0;
-							}
-							undoneAll = processGetNext(undoneAll);
-						}
-					}
-                }
+				}
+				if(found == 1) break;
 			}
 			p = processGetNext(p);
 		}
 		if(found) break;
-		if(!found && chance)
+		if(!found && chance){
             prio--;
-        else{
-            printf("# Chance dada #");
+			chance = 0;
+        }else{
+            //printf("# Chance dada #");
             chance = 1;
         }
 	}
+	//printf(" process %d selected",processGetPid(p));
+
 	return p;
 }
 
@@ -124,6 +105,10 @@ Process* rrpSchedule(Process *plist) {
 //normalmente quando o processo e' desassociado do slot de RRPrio
 int rrpReleaseParams(Process *p) {
 	//...
+	RRPrioParams * params = processGetSchedParams(p);
+	int prio = params->prio;
+	if(params->done == 0)
+		unDonesByPrio[prio] --;
 	free(processGetSchedParams(p));
 	return 0;
 }
@@ -134,6 +119,13 @@ int rrpSetPrio(Process *p, int prio) {
 	//...
 	RRPrioParams * params = processGetSchedParams(p);
 	int oldPrio = params->prio;
+	if(params->done == 0){
+		unDonesByPrio[oldPrio] --;
+		unDonesByPrio[prio] ++;
+	}else{
+		params->done = 0;
+		unDonesByPrio[prio] ++;
+	}
 	params->prio = prio;
 	return oldPrio;
 }
