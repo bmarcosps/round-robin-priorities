@@ -57,6 +57,7 @@ Process* rrpSchedule(Process *plist) {
 	Process* p;
 	int prio = 7;
 	int found = 0;
+	int chance = 0;
 	while(prio>=0){
 		p = plist;
 		while(p!=NULL){
@@ -109,7 +110,12 @@ Process* rrpSchedule(Process *plist) {
 			p = processGetNext(p);
 		}
 		if(found) break;
-		prio--;
+		if(!found && chance)
+            prio--;
+        else{
+            printf("# Chance dada #");
+            chance = 1;
+        }
 	}
 	return p;
 }
