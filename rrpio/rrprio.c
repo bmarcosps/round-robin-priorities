@@ -63,57 +63,36 @@ Process* rrpSchedule(Process *plist) {
 		while(p!=NULL){
 			RRPrioParams * params = processGetSchedParams(p);
 			if(params->prio == prio && params->done == 0){
-				if(processGetStatus(p) == PROC_READY){
+				if(processGetStatus(p) == PROC_READY || processGetStatus(p) == PROC_RUNNING)
 					found = 1;
-					params->done = 1;
-					Process* next = processGetNext(p);
-					while(next!=NULL){ //search for next process
-						RRPrioParams * nextParams = processGetSchedParams(next);
-						if(nextParams->prio == prio){
-							break;
-						}
-						next = processGetNext(next);
-					}
-					if(next == NULL){ //last process done -> undone all process with given priority
-						Process * undoneAll = plist;
-						while(undoneAll!=NULL){
-							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
-							if(undoneParams->prio == prio){
-								undoneParams->done = 0;
-							}
-							undoneAll = processGetNext(undoneAll);
-						}
-					}
-					break;
-				}else{
-                    params->done = 1;
-					Process* next = processGetNext(p);
-					while(next!=NULL){ //search for next process
-						RRPrioParams * nextParams = processGetSchedParams(next);
-						if(nextParams->prio == prio){
-							break;
-						}
-						next = processGetNext(next);
-					}
-					if(next == NULL){ //last process done -> undone all process with given priority
-						Process * undoneAll = plist;
-						while(undoneAll!=NULL){
-							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
-							if(undoneParams->prio == prio){
-								undoneParams->done = 0;
-							}
-							undoneAll = processGetNext(undoneAll);
-						}
-					}
+                params->done = 1;
+                Process* next = processGetNext(p);
+                while(next!=NULL){ //search for next process
+                    RRPrioParams * nextParams = processGetSchedParams(next);
+                    if(nextParams->prio == prio){
+                        break;
+                    }
+                    next = processGetNext(next);
                 }
+                if(next == NULL){ //last process done -> undone all process with given priority
+                    Process * undoneAll = plist;
+                    while(undoneAll!=NULL){
+                        RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
+                        if(undoneParams->prio == prio){
+                            undoneParams->done = 0;
+                        }
+                        undoneAll = processGetNext(undoneAll);
+                    }
+                }
+                if(found) break;
 			}
 			p = processGetNext(p);
 		}
 		if(found) break;
-		if(!found && chance)
+		if(!found && chance){
             prio--;
-        else{
-            printf("# Chance dada #");
+            chance = 0;
+        }else{
             chance = 1;
         }
 	}
