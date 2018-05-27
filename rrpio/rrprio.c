@@ -20,19 +20,10 @@ const char rrprioName[]="RRPr";
 
 //=====Funcoes Auxiliares=====
 
-Process * plistPrio[7];
 
-Process * rrpGetNextPrio(Process * p){
-	return NULL;
-}
 
-void rrpInsertProcessPrioList(Process * p){
 
-}
 
-void rrpRemoveProcessPrioList(Process * p){
-
-}
 
 //=====Funcoes da API=====
 
@@ -41,33 +32,23 @@ void rrpRemoveProcessPrioList(Process * p){
 //Deve envolver a inicializacao de possiveis parametros gerais
 //Deve envolver o registro do algoritmo junto ao escalonador
 void rrpInitSchedInfo() {
-	unsigned int i;
-
-    SchedInfo* rrp = malloc(sizeof(SchedInfo));
-
-	for(i = 0; i < 4; i++) {
+	//...
+    SchedInfo * rrp = malloc(sizeof(SchedInfo));
+	for(unsigned int i = 0; i<4;i++)
 		rrp->name[i] = rrprioName[i];
-	}
-
 	rrp->initParamsFn = rrpInitSchedParams;
 	rrp->scheduleFn = rrpSchedule;
 	rrp->releaseParamsFn = rrpReleaseParams;
 	schedRegisterScheduler(rrp);
-
-	for(i = 0; i < 8; i++){
-		plistPrio[i] = NULL;
-	}
 }
 
 //Inicializa os parametros de escalonamento de um processo p, chamada
 //normalmente quando o processo e' associado ao slot de RRPrio
 void rrpInitSchedParams(Process *p, void *params) {
+	//...
 	RRPrioParams * newParams = params;
 	newParams->done = 0;
-	newParams->nextPrio = NULL;
 	processSetSchedParams(p,newParams);
-
-	rrpInsertProcessPrioList(p);
 }
 
 //Retorna o proximo processo a obter a CPU, conforme o algortimo RRPrio
@@ -103,7 +84,27 @@ Process* rrpSchedule(Process *plist) {
 						}
 					}
 					break;
-				}
+				}else{
+                    params->done = 1;
+					Process* next = processGetNext(p);
+					while(next!=NULL){ //search for next process
+						RRPrioParams * nextParams = processGetSchedParams(next);
+						if(nextParams->prio == prio){
+							break;
+						}
+						next = processGetNext(next);
+					}
+					if(next == NULL){ //last process done -> undone all process with given priority
+						Process * undoneAll = plist;
+						while(undoneAll!=NULL){
+							RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
+							if(undoneParams->prio == prio){
+								undoneParams->done = 0;
+							}
+							undoneAll = processGetNext(undoneAll);
+						}
+					}
+                }
 			}
 			p = processGetNext(p);
 		}
@@ -113,7 +114,7 @@ Process* rrpSchedule(Process *plist) {
 	return p;
 }
 
-//Libera os parametros de escalonamento de um processo p, chamada 
+//Libera os parametros de escalonamento de um processo p, chamada
 //normalmente quando o processo e' desassociado do slot de RRPrio
 int rrpReleaseParams(Process *p) {
 	//...
