@@ -18,7 +18,7 @@
 typedef struct rrprio_params {
     int prio;
     int done;
-        //...
+
 } RRPrioParams;
 
 //Funcao chamada pela inicializacao do S.O. para a incializacao do escalonador
