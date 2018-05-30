@@ -24,10 +24,6 @@ unsigned int schedulerNumber = -1;
 //=====Funcoes Auxiliares=====
 
 
-
-
-
-
 //=====Funcoes da API=====
 
 //Funcao chamada pela inicializacao do S.O. para a incializacao do escalonador
@@ -61,21 +57,23 @@ Process* rrpSchedule(Process *plist) {
 	Process* p;
 	int prio = 7;
 	int found = 0;
-	int chance = 0;
+	int chance = 0; //variavel para garantir que posso diminuir a prioridade
 	while(prio>=0){
 		if(unDonesByPrio[prio] == 0){ // não há processos com tal prioridade
 			prio --;
 		}
 		p = plist;
-		while(p!=NULL){
+		while(p != NULL){
 			RRPrioParams * params = processGetSchedParams(p);
-			if(params->prio == prio && params->done == 0){
-				if(processGetStatus(p) == PROC_READY || processGetStatus(p) == PROC_RUNNING) found = 1;
+			if(params->prio == prio && params->done == 0){ //se o processo ainda nao teve vez
+				if(processGetStatus(p) == PROC_READY || processGetStatus(p) == PROC_RUNNING){ 
+					found = 1; //marca que já encontramos um processo para executar
+				}
 				params->done = 1;
 				unDonesByPrio[prio] --;
 				if(unDonesByPrio[prio] == 0){ //conferir se todos estão done
 					Process * undoneAll = plist;
-					while(undoneAll!=NULL){
+					while(undoneAll != NULL){ // permite processos com dada prioridade serem escolhidos novamente
 						RRPrioParams * undoneParams = processGetSchedParams(undoneAll);
 						if(undoneParams->prio == prio){
 							undoneParams->done = 0;
@@ -84,20 +82,20 @@ Process* rrpSchedule(Process *plist) {
 						undoneAll = processGetNext(undoneAll);
 					}
 				}
-				if(found == 1) break;
+				if(found) break; //se encontrei nao preciso continuar procurando por enquanto
 			}
-			p = processGetNext(p);
+			p = processGetNext(p); //se nao encontrei vou para o proximo da lista
 		}
-		if(found) break;
-		if(!found && chance){
+		if(found){
+			break;
+		}
+		if(!found && chance){ 
             prio--;
 			chance = 0;
-        }else{
-            //printf("# Chance dada #");
+        } else {
             chance = 1;
         }
 	}
-	//printf(" process %d selected",processGetPid(p));
 
 	return p;
 }
